@@ -17,19 +17,34 @@ class TrackerConfig {
   ///最小定位距离间隔(米).
   final double minDistance;
 
+  ///安卓常驻通知标题.
+  final String notificationTitle;
+
+  ///安卓常驻通知内容.
+  final String notificationContent;
+
   TrackerConfig(this.postUrl,
-      {this.headers, this.extraBody, this.minTimeInterval = 300, this.minDistance = 0})
+      {this.headers,
+      this.extraBody,
+      this.minTimeInterval = 300,
+      this.minDistance = 0,
+      this.notificationTitle = "位置上报服务已开启",
+      this.notificationContent = "位置上报服务正在运行中..."})
       : assert(postUrl != null),
         assert(minTimeInterval >= 5),
-        assert(minDistance >= 0);
+        assert(minDistance >= 0),
+        assert(notificationTitle != null && notificationTitle.isNotEmpty),
+        assert(notificationContent != null && notificationContent.isNotEmpty);
 
   Map<String, dynamic> asJson() {
     return <String, dynamic>{
       "postUrl": postUrl,
       "minTimeInterval": minTimeInterval,
       "minDistance": minDistance,
-      "headers": headers ?? <String, dynamic>{},
-      "extraBody": extraBody ?? <String, dynamic>{}
+      "headers": headers ?? <String, String>{},
+      "extraBody": extraBody ?? <String, String>{},
+      "notificationTitle": notificationTitle,
+      "notificationContent": notificationContent
     };
   }
 }

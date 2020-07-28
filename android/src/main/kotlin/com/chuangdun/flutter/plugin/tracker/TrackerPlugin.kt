@@ -7,67 +7,81 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.plugin.common.PluginRegistry
 import io.flutter.plugin.common.PluginRegistry.Registrar
 
 const val METHOD_CHANNEL_NAME = "com.chuangdun.flutter/tracker/methods"
 const val EVENT_CHANNEL_NAME = "com.chuangdun.flutter/tracker/events"
-
+const val REQUEST_PERMISSION = 10001
 
 /** TrackerPlugin */
-public class TrackerPlugin: FlutterPlugin, MethodCallHandler{
+public class TrackerPlugin: FlutterPlugin, MethodCallHandler,ActivityAware,PluginRegistry.RequestPermissionsResultListener{
+
   private lateinit var methodChannel : MethodChannel
-  private lateinit var context: Context
-  private lateinit var activity: Activity
+
+  private var context:Context? = null
+  private var activity: Activity? = null
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-    methodChannel = MethodChannel(flutterPluginBinding.getFlutterEngine().getDartExecutor(), METHOD_CHANNEL_NAME)
+    context = flutterPluginBinding.applicationContext
+    methodChannel = MethodChannel(flutterPluginBinding.flutterEngine.dartExecutor, METHOD_CHANNEL_NAME)
     methodChannel.setMethodCallHandler(this)
   }
 
-  // This static function is optional and equivalent to onAttachedToEngine. It supports the old
-  // pre-Flutter-1.12 Android projects. You are encouraged to continue supporting
-  // plugin registration via this function while apps migrate to use the new Android APIs
-  // post-flutter-1.12 via https://flutter.dev/go/android-project-migration.
-  //
-  // It is encouraged to share logic between onAttachedToEngine and registerWith to keep
-  // them functionally equivalent. Only one of onAttachedToEngine or registerWith will be called
-  // depending on the user's project. onAttachedToEngine or registerWith must both be defined
-  // in the same class.
   companion object {
     @JvmStatic
     fun registerWith(registrar: Registrar) {
       val trackerPlugin = TrackerPlugin()
       trackerPlugin.context = registrar.context()
-
+      trackerPlugin.activity = registrar.activity()
+      registrar.addRequestPermissionsResultListener(trackerPlugin)
       val channel = MethodChannel(registrar.messenger(), METHOD_CHANNEL_NAME)
       channel.setMethodCallHandler(trackerPlugin)
     }
   }
 
   override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
+    if (activity == null || context == null){
+      result.success(false)
+      return
+    }
     when(call.method){
       "start" -> {
-        val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
-          arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,
-                  Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        }else{
-          arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION)
+        val permissions = mutableListOf(Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+          permissions.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
         }
         val notGrantedPermissions = permissions.filterNot {
-          ActivityCompat.checkSelfPermission(context,it) == PackageManager.PERMISSION_GRANTED}
+          ActivityCompat.checkSelfPermission(context!!,it) == PackageManager.PERMISSION_GRANTED}
         if (notGrantedPermissions.isNotEmpty()){
-          ActivityCompat.requestPermissions(activity, notGrantedPermissions.toTypedArray(), 9999)
+          ActivityCompat.requestPermissions(activity!!, notGrantedPermissions.toTypedArray(), REQUEST_PERMISSION)
         }
+        val postUrl = call.argument<String>("postUrl")
+        val headers = call.argument<Map<String, String>>("headers")
+        val extraBody = call.argument<Map<String, String>>("extraBody")
+        val minTimeInterval = call.argument<Int>("minTimeInterval")
+        val minDistance = call.argument<Double>("minDistance")
+        val notificationTitle = call.argument<String>("notificationTitle")
+        val notificationContent = call.argument<String>("notificationContent")
+        if (postUrl == null || headers == null || extraBody == null || minTimeInterval == null
+                || minDistance == null || notificationTitle == null || notificationContent == null){
+          throw IllegalArgumentException("定位参数有误,请检查.")
+        }
+        TrackerManager.start(context!!, postUrl, headers, extraBody, minTimeInterval,
+                minDistance.toFloat(),notificationTitle, notificationContent)
+        result.success(true)
       }
       "stop" -> {
-
+        TrackerManager.shutdown(context!!)
       }
       else -> result.notImplemented()
     }
@@ -77,4 +91,36 @@ public class TrackerPlugin: FlutterPlugin, MethodCallHandler{
     methodChannel.setMethodCallHandler(null)
   }
 
+  override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+    this.activity = binding.activity
+    binding.addRequestPermissionsResultListener(this)
+  }
+
+  override fun onDetachedFromActivityForConfigChanges() {
+    this.activity = null
+  }
+
+  override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+    this.activity = binding.activity
+    binding.addRequestPermissionsResultListener(this)
+  }
+
+  override fun onDetachedFromActivity() {
+    this.activity = null
+  }
+
+  override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>?, grantResults: IntArray?): Boolean {
+    if (REQUEST_PERMISSION == requestCode){
+      var granted= if (grantResults != null) {
+        var temporary = true
+        for (grantResult in grantResults){
+          temporary = temporary && grantResult == PackageManager.PERMISSION_DENIED
+        }
+        temporary
+      }else{
+        false
+      }
+    }
+    return true
+  }
 }
