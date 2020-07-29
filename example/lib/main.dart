@@ -20,14 +20,20 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> start() async {
     if (!mounted) return;
-    Tracker()
-        .start(TrackerConfig("https://httpbin.org/post", minTimeInterval: 30, minDistance: 0.0));
+    Tracker().start(TrackerConfig("https://httpbin.org/post",
+        minTimeInterval: 30,
+        minDistance: 0.0,
+        headers: {"token": "123456", "timestamp": "123454545454"},
+        extraBody: {"extra1": "1", "extra2": "2"}));
   }
 
   Future<void> restart() async {
     if (!mounted) return;
-    Tracker()
-        .start(TrackerConfig("https://httpbin.org/post", minTimeInterval: 60, minDistance: 0.0));
+    Tracker().start(TrackerConfig("https://httpbin.org/post",
+        minTimeInterval: 60,
+        minDistance: 0.0,
+        headers: {"token": "123456", "timestamp": "123454545454"},
+        extraBody: {"extra1": "1", "extra2": "2"}));
   }
 
   Future<void> stop() async {

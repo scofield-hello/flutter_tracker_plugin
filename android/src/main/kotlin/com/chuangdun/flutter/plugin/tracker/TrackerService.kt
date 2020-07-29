@@ -70,8 +70,8 @@ class TrackerService: Service(), LocationTracker.LocationCallback {
                 Log.d(TAG, "postUrl:$postUrl")
                 Log.d(TAG, "headers: $headers")
                 Log.d(TAG, "extraBody: $extraBody")
-                Log.d(TAG, "minTimeInterval: $minTimeInterval")
-                Log.d(TAG, "minDistance: $minDistance")
+                Log.d(TAG, "minTimeInterval: $minTimeInterval 秒")
+                Log.d(TAG, "minDistance: $minDistance 米")
                 Log.d(TAG, "notificationTitle: $notificationTitle")
                 Log.d(TAG, "notificationContent: $notificationContent")
                 mGpsTracker.minDistance = minDistance * 1000L
@@ -105,9 +105,9 @@ class TrackerService: Service(), LocationTracker.LocationCallback {
         val importance = NotificationManager.IMPORTANCE_DEFAULT
         val notificationChannel = NotificationChannel(channelId, channelId, importance)
         notificationManager.createNotificationChannel(notificationChannel)
-        val intent = Intent("com.chuangdun.flutter.plugin.tracker.start")
-        val piLaunchMainActivity = PendingIntent
-                .getBroadcast(context, 10001, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        val intent = packageManager.getLaunchIntentForPackage(packageName)
+        val piLaunchMainActivity =  PendingIntent.getActivity(context,
+                10001, intent, PendingIntent.FLAG_UPDATE_CURRENT)
         val notification = Notification.Builder(context, channelId)
                 .setContentTitle(title)
                 .setContentText(content)
@@ -120,9 +120,9 @@ class TrackerService: Service(), LocationTracker.LocationCallback {
 
     @TargetApi(25)
     fun createNotificationPreO(context: Service, title: String, content: String) {
-        val intent = Intent("com.chuangdun.flutter.plugin.tracker.start")
-        val piLaunchMainActivity = PendingIntent
-                .getBroadcast(context, 10001, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        val intent = packageManager.getLaunchIntentForPackage(packageName)
+        val piLaunchMainActivity =  PendingIntent.getActivity(context,
+                10001, intent, PendingIntent.FLAG_UPDATE_CURRENT)
         val mNotification: Notification = NotificationCompat.Builder(context)
                 .setContentTitle(title)
                 .setContentText(content)

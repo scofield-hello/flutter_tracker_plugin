@@ -31,13 +31,12 @@ class LocationTracker(private val context: Context, private val callback:Locatio
         if (location == null) {
             return
         }
-        val timeSpan: Long = location.time - lastLocationTime
-        Log.d(ContentValues.TAG, "位置变化间隔：$timeSpan")
+        val timeSpan= location.time - lastLocationTime
         if (timeSpan >= minTimeIntervalInMillSecond) {
             lastLocationTime = location.time
             callback.onLocationChanged(location)
         } else {
-            Log.w(TAG, "位置变化过于频繁,该位置信息将被丢弃")
+            Log.d(TAG, "位置变化过于频繁,该位置信息被丢弃")
         }
     }
 
@@ -91,15 +90,16 @@ class LocationTracker(private val context: Context, private val callback:Locatio
             locationManager.requestLocationUpdates(mProvider,
                     minTimeIntervalInMillSecond, minDistance, this)
             isStart = true
-            Log.i(TAG, "start: 开始定位, 位置提供者: $mProvider")
+            Log.i(TAG, "定位已开始: $mProvider")
         }
     }
 
     fun stop() {
         if (isStart) {
             locationManager.removeUpdates(this)
+            lastLocationTime = 0L
             isStart = false
-            Log.i(TAG, "start: 停止定位, 位置提供者: $mProvider")
+            Log.i(TAG, "定位已停止")
         }
     }
 
