@@ -9,7 +9,7 @@ import androidx.work.WorkerParameters
 
 class ServiceLauncher(private val context: Context, private val workerParams: WorkerParameters) : Worker(context, workerParams) {
 
-    companion object{
+    companion object {
         private const val TAG = "ServiceLauncher"
     }
 

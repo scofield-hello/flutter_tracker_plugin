@@ -9,13 +9,13 @@ import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 class TrackerManager {
-    companion object{
+    companion object {
         private const val TAG = "TrackerManager"
         private const val UNIQUE_WORK_NAME = "TrackerServiceLauncher"
         @JvmStatic
-        fun start(context: Context, postUrl:String, headers:Map<String, String>,
-                  extraBody:Map<String, String>, minTimeInterval: Int, minDistance: Float,
-                  notificationTitle:String, notificationContent:String){
+        fun start(context: Context, postUrl: String, headers: Map<String, String>,
+                  extraBody: Map<String, String>, minTimeInterval: Int, minDistance: Float,
+                  notificationTitle: String, notificationContent: String) {
             val params = Data.Builder()
                     .putString("postUrl", postUrl)
                     .putString("headers", JSONObject(headers).toString(4))
@@ -40,7 +40,7 @@ class TrackerManager {
         }
 
         @JvmStatic
-        fun shutdown(context: Context){
+        fun shutdown(context: Context) {
             val intent = Intent(context, TrackerService::class.java)
             intent.putExtra("command", TrackerCommand.OFF)
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {

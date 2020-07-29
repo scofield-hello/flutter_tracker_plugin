@@ -13,16 +13,16 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 
 
-class LocationTracker(private val context: Context, private val callback:LocationCallback):LocationListener {
+class LocationTracker(private val context: Context, private val callback: LocationCallback) : LocationListener {
 
     var minDistance = 0.0f
     var minTimeIntervalInMillSecond = 300000L
     private var isStart = false
-    private var mProvider:String? = null
+    private var mProvider: String? = null
     private var lastLocationTime = 0L
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-    companion object{
+    companion object {
         private const val TAG = "LocationTracker"
     }
 
@@ -30,7 +30,7 @@ class LocationTracker(private val context: Context, private val callback:Locatio
         if (location == null) {
             return
         }
-        val timeSpan= location.time - lastLocationTime
+        val timeSpan = location.time - lastLocationTime
         if (timeSpan >= minTimeIntervalInMillSecond) {
             lastLocationTime = location.time
             callback.onLocationChanged(location)
@@ -51,7 +51,7 @@ class LocationTracker(private val context: Context, private val callback:Locatio
         restart()
     }
 
-    private fun restart(){
+    private fun restart() {
         val newBestProvider = getBestProvider()
         if (newBestProvider == null) {
             if (isStart) {
@@ -68,20 +68,21 @@ class LocationTracker(private val context: Context, private val callback:Locatio
         }
     }
 
-    fun start(){
+    fun start() {
         val permissions = mutableListOf(
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             permissions.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
         }
         val notGrantedPermissions = permissions.filterNot {
-            ContextCompat.checkSelfPermission(context,it) == PackageManager.PERMISSION_GRANTED}
-        if (notGrantedPermissions.isNotEmpty()){
+            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+        }
+        if (notGrantedPermissions.isNotEmpty()) {
             callback.onPermissionDenied()
             return
         }
-        if (!isStart){
+        if (!isStart) {
             mProvider = getBestProvider()
             if (mProvider == null) {
                 return
@@ -102,7 +103,7 @@ class LocationTracker(private val context: Context, private val callback:Locatio
         }
     }
 
-    fun isStart():Boolean{
+    fun isStart(): Boolean {
         return isStart
     }
 
@@ -118,7 +119,7 @@ class LocationTracker(private val context: Context, private val callback:Locatio
         return locationManager.getBestProvider(criteria, true)
     }
 
-    interface LocationCallback{
+    interface LocationCallback {
         fun onLocationChanged(location: Location)
         fun onNotAvailable()
         fun onPermissionDenied()

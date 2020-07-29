@@ -18,26 +18,26 @@ import java.util.concurrent.ThreadFactory
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
-class TrackerCommand{
-    companion object{
+class TrackerCommand {
+    companion object {
         const val ON = 1
         const val OFF = 0
     }
 }
 
-class TrackerService: Service(), LocationTracker.LocationCallback {
-    companion object{
+class TrackerService : Service(), LocationTracker.LocationCallback {
+    companion object {
         private const val TAG = "TrackerService"
         private const val NOTIFICATION_ID = 100
     }
 
     private var minDistance = 0.0f
     private var minTimeInterval = 300
-    private lateinit var postUrl:String
+    private lateinit var postUrl: String
     private lateinit var headers: JSONObject
     private lateinit var extraBody: JSONObject
-    private lateinit var notificationTitle:String
-    private lateinit var notificationContent:String
+    private lateinit var notificationTitle: String
+    private lateinit var notificationContent: String
     private lateinit var mGpsTracker: LocationTracker
     private val threadPool = ThreadPoolExecutor(1,
             1,
@@ -57,7 +57,7 @@ class TrackerService: Service(), LocationTracker.LocationCallback {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when(intent!!.getIntExtra("command", TrackerCommand.OFF)){
+        when (intent!!.getIntExtra("command", TrackerCommand.OFF)) {
             TrackerCommand.ON -> {
                 Log.i(TAG, "正在开启位置跟踪服务组件...")
                 postUrl = intent.getStringExtra("postUrl")!!
@@ -106,7 +106,7 @@ class TrackerService: Service(), LocationTracker.LocationCallback {
         val notificationChannel = NotificationChannel(channelId, channelId, importance)
         notificationManager.createNotificationChannel(notificationChannel)
         val intent = packageManager.getLaunchIntentForPackage(packageName)
-        val piLaunchMainActivity =  PendingIntent.getActivity(context,
+        val piLaunchMainActivity = PendingIntent.getActivity(context,
                 10001, intent, PendingIntent.FLAG_UPDATE_CURRENT)
         val notification = Notification.Builder(context, channelId)
                 .setContentTitle(title)
@@ -121,7 +121,7 @@ class TrackerService: Service(), LocationTracker.LocationCallback {
     @TargetApi(25)
     fun createNotificationPreO(context: Service, title: String, content: String) {
         val intent = packageManager.getLaunchIntentForPackage(packageName)
-        val piLaunchMainActivity =  PendingIntent.getActivity(context,
+        val piLaunchMainActivity = PendingIntent.getActivity(context,
                 10001, intent, PendingIntent.FLAG_UPDATE_CURRENT)
         val mNotification: Notification = NotificationCompat.Builder(context)
                 .setContentTitle(title)
