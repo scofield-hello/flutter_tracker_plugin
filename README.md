@@ -1,6 +1,6 @@
 # tracker
 
-A new Flutter plugin.
+flutter位置上报插件.
 
 ## Getting Started
 
@@ -12,3 +12,13 @@ Android and/or iOS.
 For help getting started with Flutter, view our 
 [online documentation](https://flutter.dev/docs), which offers tutorials, 
 samples, guidance on mobile development, and a full API reference.
+
+## 使用方式
+```dart
+val config = TrackerConfig("https://httpbin.org/post",
+                     minTimeInterval: 60,
+                     minDistance: 0.0,
+                     headers: {"token": "123456"},
+                     extraBody: {"extra1": "1", "extra2": "2"});
+Tracker().start(config);
+```
