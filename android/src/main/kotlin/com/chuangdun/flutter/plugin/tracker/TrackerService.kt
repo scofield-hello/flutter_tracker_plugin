@@ -101,14 +101,14 @@ class TrackerService: Service(), LocationTracker.LocationCallback {
     @TargetApi(26)
     fun createNotificationO(context: Service, title: String, content: String) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val channelName = "tracker_channel"
-        val importance = NotificationManager.IMPORTANCE_HIGH
-        val notificationChannel = NotificationChannel(channelName, channelName, importance)
+        val channelId = "tracker_channel"
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val notificationChannel = NotificationChannel(channelId, channelId, importance)
         notificationManager.createNotificationChannel(notificationChannel)
         val intent = Intent("com.chuangdun.flutter.plugin.tracker.start")
         val piLaunchMainActivity = PendingIntent
                 .getBroadcast(context, 10001, intent, PendingIntent.FLAG_UPDATE_CURRENT)
-        val notification = Notification.Builder(context, channelName)
+        val notification = Notification.Builder(context, channelId)
                 .setContentTitle(title)
                 .setContentText(content)
                 .setContentIntent(piLaunchMainActivity)
