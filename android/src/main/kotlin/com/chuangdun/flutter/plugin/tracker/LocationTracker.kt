@@ -1,7 +1,6 @@
 package com.chuangdun.flutter.plugin.tracker
 
 import android.Manifest
-import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Criteria
