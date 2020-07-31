@@ -17,12 +17,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) NSMutableDictionary *headers;
 @property (nonatomic) NSMutableDictionary *extraBody;
 
-//-(instancetype) initWithPostUrl:(NSString*)postUrl
-//                               minDistance:(double) minDistance
-//                               minTimeInterval:(int) minTimeInterval
-//                               headers:(NSMutableDictionary*) headers
-//                               extraBody:(NSMutableDictionary*) extraBody;
-
 -(void) start;
 
 -(void) stop;
