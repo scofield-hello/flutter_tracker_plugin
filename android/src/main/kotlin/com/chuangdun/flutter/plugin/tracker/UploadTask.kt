@@ -15,6 +15,7 @@ class UploadTask(
         private val latitude: Double,
         private val longitude: Double,
         private val timestamp: Long,
+        private val provider: String,
         private val platform: String = "android",
         private val deviceBrand: String,
         private val deviceModel: String,
@@ -39,6 +40,7 @@ class UploadTask(
                 put("latitude", latitude)
                 put("longitude", longitude)
                 put("timestamp", timestamp)
+                put("provider", provider)
                 put("deviceBrand", deviceBrand)
                 put("deviceModel", deviceModel)
                 put("systemVersion", systemVersion)

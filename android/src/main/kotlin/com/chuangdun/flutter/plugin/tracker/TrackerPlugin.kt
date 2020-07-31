@@ -20,7 +20,6 @@ import io.flutter.plugin.common.PluginRegistry
 import io.flutter.plugin.common.PluginRegistry.Registrar
 
 const val METHOD_CHANNEL_NAME = "com.chuangdun.flutter/tracker/methods"
-const val EVENT_CHANNEL_NAME = "com.chuangdun.flutter/tracker/events"
 const val REQUEST_PERMISSION = 10001
 
 /** TrackerPlugin */
