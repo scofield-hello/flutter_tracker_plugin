@@ -21,12 +21,13 @@
       NSMutableDictionary *headers = [[NSMutableDictionary alloc]initWithDictionary:((NSDictionary*)[arguments objectForKey:@"headers"])];
       NSMutableDictionary *extraBody = [[NSMutableDictionary alloc]initWithDictionary:((NSDictionary*)[arguments objectForKey:@"extraBody"])];
       if (!_trackerManager) {
-          _trackerManager = [[TrackerManager alloc]initWithPostUrl:postUrl
-                                                       minDistance:minDistance
-                                                   minTimeInterval:minTimeInterval
-                                                           headers:headers
-                                                         extraBody:extraBody];
+          _trackerManager = [[TrackerManager alloc]init];
       }
+      _trackerManager.postUrl = postUrl;
+      _trackerManager.headers = headers;
+      _trackerManager.extraBody = extraBody;
+      _trackerManager.minDistance = minDistance;
+      _trackerManager.minTimeInterval = minTimeInterval;
       NSLog(@"TrackerManager:%@", _trackerManager);
       [_trackerManager start];
   } else if([@"stop" isEqualToString:call.method]) {

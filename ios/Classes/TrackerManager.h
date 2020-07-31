@@ -11,13 +11,17 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface TrackerManager : NSObject
+@property (nonatomic, copy) NSString *postUrl;
+@property (nonatomic) double minDistance;
+@property (nonatomic) int minTimeInterval;
+@property (nonatomic) NSMutableDictionary *headers;
+@property (nonatomic) NSMutableDictionary *extraBody;
 
-
--(instancetype) initWithPostUrl:(NSString*)postUrl
-                               minDistance:(double) minDistance
-                               minTimeInterval:(int) minTimeInterval
-                               headers:(NSMutableDictionary*) headers
-                               extraBody:(NSMutableDictionary*) extraBody;
+//-(instancetype) initWithPostUrl:(NSString*)postUrl
+//                               minDistance:(double) minDistance
+//                               minTimeInterval:(int) minTimeInterval
+//                               headers:(NSMutableDictionary*) headers
+//                               extraBody:(NSMutableDictionary*) extraBody;
 
 -(void) start;
 

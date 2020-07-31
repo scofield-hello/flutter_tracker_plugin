@@ -20,20 +20,20 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> start() async {
     if (!mounted) return;
-    Tracker().start(TrackerConfig("https://httpbin.org/post",
+    Tracker().start(TrackerConfig("http://192.168.0.23:8080/location/info/create",
         minTimeInterval: 30,
         minDistance: 0.0,
-        headers: {"token": "123456", "timestamp": "123454545454"},
-        extraBody: {"extra1": "1", "extra2": "2"}));
+        headers: {"Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJsb2dpbl91c2VyX2tleSI6IjhhZDU2ZWU0LWY2ZTUtNDc2My04NTYwLTgwYTk5Zjc2MTIyOCJ9.8Mh8lFu4Rd9uhV6w_dRvCGfZE3ErpvJz6UiOZnhuKOrjM_WMFp8aMd6rXs9Uro3CaQodhfLAon-gvh5Vyrtxag"},
+        ));
   }
 
   Future<void> restart() async {
     if (!mounted) return;
-    Tracker().start(TrackerConfig("https://httpbin.org/post",
+    Tracker().start(TrackerConfig("http://192.168.0.23:8080/location/info/create",
         minTimeInterval: 60,
-        minDistance: 0.0,
-        headers: {"token": "123456", "timestamp": "123454545454"},
-        extraBody: {"extra1": "1", "extra2": "2"}));
+        minDistance: 10.0,
+        headers: {"Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJsb2dpbl91c2VyX2tleSI6IjhhZDU2ZWU0LWY2ZTUtNDc2My04NTYwLTgwYTk5Zjc2MTIyOCJ9.8Mh8lFu4Rd9uhV6w_dRvCGfZE3ErpvJz6UiOZnhuKOrjM_WMFp8aMd6rXs9Uro3CaQodhfLAon-gvh5Vyrtxag"},
+        extraBody: {"extra": "1"}));
   }
 
   Future<void> stop() async {

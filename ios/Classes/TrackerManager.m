@@ -10,13 +10,9 @@
 #import <sys/utsname.h>
 
 @interface TrackerManager()<CLLocationManagerDelegate>{
-    NSString *_postUrl;
-    double _minDistance;
-    int _minTimeInterval;
-    NSMutableDictionary *_headers;
-    NSMutableDictionary *_extraBody;
+    BOOL _start;
+    BOOL _deferringUpdates;
     CLLocationManager *_locationManager;
-    BOOL _isStart;
 }
 @end
 
@@ -24,30 +20,24 @@
 
 - (instancetype)init
 {
-    [NSException raise:@"initialization error"
-    format:@"Use initWithPostUrl:,not init"];
-    return nil;
-}
-
-- (instancetype)initWithPostUrl:(NSString *)postUrl
-                    minDistance:(double)minDistance
-                minTimeInterval:(int)minTimeInterval
-                        headers:(NSMutableDictionary *)headers
-                      extraBody:(NSMutableDictionary *)extraBody{
     self = [super init];
     if (self) {
-        _postUrl = postUrl;
-        _minDistance = minDistance;
-        _minTimeInterval = minTimeInterval;
-        _headers = headers;
-        _extraBody = extraBody;
-        _locationManager = [[CLLocationManager alloc]init];
+        _locationManager = [[CLLocationManager alloc] init];
         _locationManager.delegate = self;
+        _deferringUpdates = NO;
     }
     return self;
 }
 
 - (void)start{
+    if (!self.postUrl
+        || !self.headers
+        || !self.extraBody
+        || self.minDistance < 0.0
+        || self.minTimeInterval <= 0) {
+        [NSException raise:@"initialization error"
+        format:@"properties not init"];
+    }
     BOOL enabled = [CLLocationManager locationServicesEnabled];
     if (enabled) {
         CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
@@ -61,6 +51,7 @@
             [self startLocation];
         }else if(status == kCLAuthorizationStatusNotDetermined){
             //申请后台定位权限
+            [_locationManager requestWhenInUseAuthorization];
             [_locationManager requestAlwaysAuthorization];
         }else{
             [self whenPermissionDenied];
@@ -70,59 +61,14 @@
     }
 }
 
-- (void)whenLocationNotAvailable{
-    //上报定位服务不可用.
-    NSString *provider = @"gps|network";
-    NSString *platform = @"iOS";
-    NSString *brand = @"iPhone";
-    NSString *model = [self getDeviceModel];
-    NSString *version = [NSString stringWithFormat:@"%.1f",
-                         [[[UIDevice currentDevice] systemVersion] floatValue]];
-    NSDate *dateNow = [NSDate date];
-    long timestamp = [[NSNumber numberWithDouble:dateNow.timeIntervalSince1970] longValue];
-    [self createDataTaskUsingPostUrl:_postUrl
-           status:@"NOT_AVAILABLE"
-          headers:_headers
-        extraBody:_extraBody
-        timestamp:timestamp
-         latitude:0.0
-        longitude:0.0
-         platform:platform
-         provider:provider
-      deviceBrand:brand
-      deviceModel:model
-    systemVersion:version];
-}
-
-- (void)whenPermissionDenied{
-    //上报定位未授予权限.
-    NSString *provider = @"gps|network";
-    NSString *platform = @"iOS";
-    NSString *brand = @"iPhone";
-    NSString *model = [self getDeviceModel];
-    NSString *version = [NSString stringWithFormat:@"%.1f",
-                         [[[UIDevice currentDevice] systemVersion] floatValue]];
-    NSDate *dateNow = [NSDate date];
-    long timestamp = [[NSNumber numberWithDouble:dateNow.timeIntervalSince1970] longValue];
-    [self createDataTaskUsingPostUrl:_postUrl
-           status:@"PERMISSION_DENIED"
-          headers:_headers
-        extraBody:_extraBody
-        timestamp:timestamp
-         latitude:0.0
-        longitude:0.0
-         platform:platform
-         provider:provider
-      deviceBrand:brand
-      deviceModel:model
-    systemVersion:version];
-}
 
 - (void)startLocation{
-    if (!_isStart) {
+    if (!_start) {
+        NSLog(@"开启位置上报服务...");
         _locationManager.pausesLocationUpdatesAutomatically = NO;
         _locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters;
         _locationManager.distanceFilter = _minDistance;
+        _deferringUpdates = false;
         if (@available(iOS 9.0, *)) {
             _locationManager.allowsBackgroundLocationUpdates = YES;
         }
@@ -131,24 +77,35 @@
         }
         _locationManager.activityType = CLActivityTypeOtherNavigation;
         [_locationManager startUpdatingLocation];
+        NSLog(@"位置上报服务已开启");
+        _start = YES;
+    }else{
+        NSLog(@"位置上报服务已在运行中...");
+        [self stop];
+        [self startLocation];
     }
-    _isStart = YES;
 }
 
 - (void)stop{
-    if (_isStart) {
+    if (_start) {
         [_locationManager stopUpdatingLocation];
+        _deferringUpdates = false;
+        NSLog(@"关闭位置上报服务.");
     }
-    _isStart = NO;
-}
-
-- (BOOL) isStar{
-    return _isStart;
+    _start = NO;
 }
 
 - (void)locationManager:(CLLocationManager *)manager
      didUpdateLocations:(NSArray<CLLocation *> *)locations{
     CLLocation *location = [locations lastObject];
+    [self uploadLocation:location];
+    if (!_deferringUpdates) {
+        [_locationManager allowDeferredLocationUpdatesUntilTraveled:_minDistance timeout:_minTimeInterval];
+        _deferringUpdates = true;
+    }
+}
+
+-(void)uploadLocation:(CLLocation*)location{
     double latitude = location.coordinate.latitude;
     double longitude = location.coordinate.longitude;
     long timestamp = [[NSNumber
@@ -159,10 +116,7 @@
     NSString *model = [self getDeviceModel];
     NSString *version = [NSString stringWithFormat:@"%.1f",
                          [[[UIDevice currentDevice] systemVersion] floatValue]];
-    [self createDataTaskUsingPostUrl:_postUrl
-                              status:@"LOCATION"
-                             headers:_headers
-                           extraBody:_extraBody
+    [self createDataTask:@"LOCATION"
                            timestamp:timestamp
                             latitude:latitude
                            longitude:longitude
@@ -187,10 +141,49 @@
     }
 }
 
--(void)createDataTaskUsingPostUrl:(NSString *)postUrl
-                           status:(NSString *)status
-              headers:(NSMutableDictionary*)headers
-            extraBody:(NSMutableDictionary*)extraBody
+- (void)whenLocationNotAvailable{
+    //上报定位服务不可用.
+    NSString *provider = @"gps|network";
+    NSString *platform = @"iOS";
+    NSString *brand = @"iPhone";
+    NSString *model = [self getDeviceModel];
+    NSString *version = [NSString stringWithFormat:@"%.1f",
+                         [[[UIDevice currentDevice] systemVersion] floatValue]];
+    NSDate *dateNow = [NSDate date];
+    long timestamp = [[NSNumber numberWithDouble:dateNow.timeIntervalSince1970] longValue];
+    [self createDataTask:@"NOT_AVAILABLE"
+        timestamp:timestamp
+         latitude:0.0
+        longitude:0.0
+         platform:platform
+         provider:provider
+      deviceBrand:brand
+      deviceModel:model
+    systemVersion:version];
+}
+
+- (void)whenPermissionDenied{
+    //上报定位未授予权限.
+    NSString *provider = @"gps|network";
+    NSString *platform = @"iOS";
+    NSString *brand = @"iPhone";
+    NSString *model = [self getDeviceModel];
+    NSString *version = [NSString stringWithFormat:@"%.1f",
+                         [[[UIDevice currentDevice] systemVersion] floatValue]];
+    NSDate *dateNow = [NSDate date];
+    long timestamp = [[NSNumber numberWithDouble:dateNow.timeIntervalSince1970] longValue];
+    [self createDataTask:@"PERMISSION_DENIED"
+        timestamp:timestamp
+         latitude:0.0
+        longitude:0.0
+         platform:platform
+         provider:provider
+      deviceBrand:brand
+      deviceModel:model
+    systemVersion:version];
+}
+
+-(void)createDataTask:(NSString *)status
             timestamp:(long int)timestamp
              latitude:(double)latitude
             longitude:(double)longitude
@@ -208,30 +201,43 @@
     manager.responseSerializer = [AFJSONResponseSerializer serializer];
     manager.requestSerializer = [AFJSONRequestSerializer serializer];
     manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", nil];
-    for (id key in headers) {
-        id value = [headers objectForKey:key];
+    for (id key in self.headers) {
+        id value = [self.headers objectForKey:key];
         [manager.requestSerializer setValue:value forHTTPHeaderField:key];
     }
-    [extraBody setValue:status forKey:@"status"];
-    [extraBody setValue:[NSNumber numberWithLong:timestamp] forKey:@"timestamp"];
-    [extraBody setValue:[NSNumber numberWithDouble:latitude] forKey:@"latitude"];
-    [extraBody setValue:[NSNumber numberWithDouble:longitude] forKey:@"longitude"];
-    [extraBody setValue:platform forKey:@"platform"];
-    [extraBody setValue:provider forKey:@"provider"];
-    [extraBody setValue:brand forKey:@"deviceBrand"];
-    [extraBody setValue:model forKey:@"deviceModel"];
-    [extraBody setValue:systemVersion forKey:@"systemVersion"];
-    [manager POST:postUrl parameters:extraBody progress:^(NSProgress * _Nonnull uploadProgress) {
-        NSLog(@"位置上传进度:%@", uploadProgress);
+    [self.extraBody setValue:status forKey:@"status"];
+    [self.extraBody setValue:[NSNumber numberWithLong:timestamp] forKey:@"timestamp"];
+    [self.extraBody setValue:[NSNumber numberWithDouble:latitude] forKey:@"latitude"];
+    [self.extraBody setValue:[NSNumber numberWithDouble:longitude] forKey:@"longitude"];
+    [self.extraBody setValue:platform forKey:@"platform"];
+    [self.extraBody setValue:provider forKey:@"provider"];
+    [self.extraBody setValue:brand forKey:@"deviceBrand"];
+    [self.extraBody setValue:model forKey:@"deviceModel"];
+    [self.extraBody setValue:systemVersion forKey:@"systemVersion"];
+    [manager POST:self.postUrl parameters:self.extraBody progress:^(NSProgress * _Nonnull uploadProgress) {
     } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-        NSLog(@"位置上传成功:%@", responseObject);
+        NSDictionary *data = responseObject;
+        if ([[data allKeys] containsObject:@"code"]) {
+            if (((NSNumber*)[data objectForKey:@"code"]).intValue == 200) {
+                NSLog(@"位置上传成功:%@", data);
+            }else{
+                NSLog(@"位置上传失败:%@", data);
+            }
+        }else{
+            NSLog(@"位置上报成功:%@", data);
+        }
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         NSLog(@"位置上传失败.");
     }];
 }
 
 - (NSString *)description{
-    return [NSString stringWithFormat:@"<postUrl:%@, minInstance:%f, minTimeInterval:%d, headers:%@, extraBody:%@>", _postUrl, _minDistance, _minTimeInterval, _headers, _extraBody];
+    return [NSString stringWithFormat:@"<postUrl:%@, headers:%@, extraBody:%@, minDistance:%f, minTimeInterval:%d>",
+            self.postUrl,
+            self.headers,
+            self.extraBody,
+            self.minDistance,
+            self.minTimeInterval];
 }
 
 - (NSString *)getDeviceModel{
