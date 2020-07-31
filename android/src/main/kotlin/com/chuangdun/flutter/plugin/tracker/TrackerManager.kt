@@ -15,11 +15,16 @@ class TrackerManager {
         @JvmStatic
         fun start(context: Context, postUrl: String, headers: Map<String, String>,
                   extraBody: Map<String, String>, minTimeInterval: Int, minDistance: Float,
+                  notificationChannelId: String, notificationChannelName: String,
+                  notificationChannelDescription: String,
                   notificationTitle: String, notificationContent: String) {
             val params = Data.Builder()
                     .putString("postUrl", postUrl)
                     .putString("headers", JSONObject(headers).toString(4))
                     .putString("extraBody", JSONObject(extraBody).toString(4))
+                    .putString("notificationChannelId", notificationChannelId)
+                    .putString("notificationChannelName", notificationChannelName)
+                    .putString("notificationChannelDescription", notificationChannelDescription)
                     .putString("notificationTitle", notificationTitle)
                     .putString("notificationContent", notificationContent)
                     .putInt("minTimeInterval", minTimeInterval)

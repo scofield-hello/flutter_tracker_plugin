@@ -17,6 +17,15 @@ class TrackerConfig {
   ///最小定位距离间隔(米).
   final double minDistance;
 
+  ///安卓常驻通知channel id.
+  final String notificationChannelId;
+
+  ///安卓常驻通知channel name.
+  final String notificationChannelName;
+
+  ///安卓常驻通知channel description.
+  final String notificationChannelDescription;
+
   ///安卓常驻通知标题.
   final String notificationTitle;
 
@@ -26,13 +35,19 @@ class TrackerConfig {
   TrackerConfig(this.postUrl,
       {this.headers,
       this.extraBody,
-      this.minTimeInterval = 300,
+      this.minTimeInterval = 30,
       this.minDistance = 0,
+      this.notificationChannelId = "tracker_service",
+      this.notificationChannelName = "位置上报",
+      this.notificationChannelDescription = "位置上报",
       this.notificationTitle = "位置上报服务已开启",
       this.notificationContent = "位置上报服务正在运行中..."})
       : assert(postUrl != null),
         assert(minTimeInterval >= 5),
         assert(minDistance >= 0),
+        assert(notificationChannelId != null && notificationChannelId.isNotEmpty),
+        assert(notificationChannelName != null && notificationChannelName.isNotEmpty),
+        assert(notificationChannelDescription != null && notificationChannelDescription.isNotEmpty),
         assert(notificationTitle != null && notificationTitle.isNotEmpty),
         assert(notificationContent != null && notificationContent.isNotEmpty);
 
@@ -43,6 +58,9 @@ class TrackerConfig {
       "minDistance": minDistance,
       "headers": headers ?? <String, String>{},
       "extraBody": extraBody ?? <String, String>{},
+      "notificationChannelId": notificationChannelId,
+      "notificationChannelName": notificationChannelName,
+      "notificationChannelDescription": notificationChannelDescription,
       "notificationTitle": notificationTitle,
       "notificationContent": notificationContent
     };
@@ -52,19 +70,17 @@ class TrackerConfig {
 class Tracker {
   static Tracker _singleton;
   final MethodChannel _methodChannel;
-  final EventChannel _eventChannel;
 
   factory Tracker() {
     if (_singleton == null) {
       const MethodChannel methodChannel = MethodChannel('com.chuangdun.flutter/tracker/methods');
-      const EventChannel eventChannel = EventChannel('com.chuangdun.flutter/tracker/events');
-      _singleton = Tracker.private(methodChannel, eventChannel);
+      _singleton = Tracker.private(methodChannel);
     }
     return _singleton;
   }
 
   @visibleForTesting
-  Tracker.private(this._methodChannel, this._eventChannel);
+  Tracker.private(this._methodChannel);
 
   Future<void> start(TrackerConfig config) async {
     assert(config != null);

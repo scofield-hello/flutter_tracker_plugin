@@ -18,6 +18,7 @@ import java.util.concurrent.ThreadFactory
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
+
 class TrackerCommand {
     companion object {
         const val ON = 1
@@ -36,6 +37,9 @@ class TrackerService : Service(), LocationTracker.LocationCallback {
     private lateinit var postUrl: String
     private lateinit var headers: JSONObject
     private lateinit var extraBody: JSONObject
+    private lateinit var notificationChannelId: String
+    private lateinit var notificationChannelName: String
+    private lateinit var notificationChannelDescription: String
     private lateinit var notificationTitle: String
     private lateinit var notificationContent: String
     private lateinit var mGpsTracker: LocationTracker
@@ -65,6 +69,9 @@ class TrackerService : Service(), LocationTracker.LocationCallback {
                 extraBody = JSONObject(intent.getStringExtra("extraBody")!!)
                 minDistance = intent.getFloatExtra("minDistance", 0.0f)
                 minTimeInterval = intent.getIntExtra("minTimeInterval", 300)
+                notificationChannelId = intent.getStringExtra("notificationChannelId")!!
+                notificationChannelName = intent.getStringExtra("notificationChannelName")!!
+                notificationChannelDescription = intent.getStringExtra("notificationChannelDescription")!!
                 notificationTitle = intent.getStringExtra("notificationTitle")!!
                 notificationContent = intent.getStringExtra("notificationContent")!!
                 Log.d(TAG, "postUrl:$postUrl")
@@ -72,11 +79,19 @@ class TrackerService : Service(), LocationTracker.LocationCallback {
                 Log.d(TAG, "extraBody: $extraBody")
                 Log.d(TAG, "minTimeInterval: $minTimeInterval 秒")
                 Log.d(TAG, "minDistance: $minDistance 米")
+                Log.d(TAG, "notificationChannelId: $notificationChannelId")
+                Log.d(TAG, "notificationChannelName: $notificationChannelName")
+                Log.d(TAG, "notificationChannelDescription: $notificationChannelDescription")
                 Log.d(TAG, "notificationTitle: $notificationTitle")
                 Log.d(TAG, "notificationContent: $notificationContent")
                 mGpsTracker.minDistance = minDistance * 1000L
                 mGpsTracker.minTimeIntervalInMillSecond = minTimeInterval * 1000L
-                createNotification(this, notificationTitle, notificationContent)
+                createNotification(this,
+                        notificationChannelId,
+                        notificationChannelName,
+                        notificationChannelDescription,
+                        notificationTitle,
+                        notificationContent)
                 track(true)
                 Log.i(TAG, "位置跟踪服务组件已开启.")
             }
@@ -90,27 +105,37 @@ class TrackerService : Service(), LocationTracker.LocationCallback {
         return START_REDELIVER_INTENT
     }
 
-    private fun createNotification(context: Service, title: String, content: String) {
+    private fun createNotification(context: Service,
+                                   channelId:String,
+                                   channelName:String,
+                                   channelDescription:String,
+                                   notificationTitle: String,
+                                   notificationContent: String) {
         if (VERSION.SDK_INT < VERSION_CODES.O) {
-            createNotificationPreO(context, title, content)
+            createNotificationPreO(context, notificationTitle, notificationContent)
         } else {
-            createNotificationO(context, title, content)
+            createNotificationO(context, channelId, channelName, channelDescription, notificationTitle, notificationContent)
         }
     }
 
     @TargetApi(26)
-    fun createNotificationO(context: Service, title: String, content: String) {
+    fun createNotificationO(context: Service,
+                            channelId:String,
+                            channelName:String,
+                            channelDescription:String,
+                            notificationTitle: String,
+                            notificationContent: String) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val channelId = "tracker_channel"
         val importance = NotificationManager.IMPORTANCE_DEFAULT
-        val notificationChannel = NotificationChannel(channelId, channelId, importance)
+        val notificationChannel = NotificationChannel(channelId, channelName, importance)
+        notificationChannel.description = channelDescription
         notificationManager.createNotificationChannel(notificationChannel)
         val intent = packageManager.getLaunchIntentForPackage(packageName)
         val piLaunchMainActivity = PendingIntent.getActivity(context,
                 10001, intent, PendingIntent.FLAG_UPDATE_CURRENT)
         val notification = Notification.Builder(context, channelId)
-                .setContentTitle(title)
-                .setContentText(content)
+                .setContentTitle(notificationTitle)
+                .setContentText(notificationContent)
                 .setContentIntent(piLaunchMainActivity)
                 .setStyle(Notification.BigTextStyle())
                 .build()
@@ -119,13 +144,15 @@ class TrackerService : Service(), LocationTracker.LocationCallback {
     }
 
     @TargetApi(25)
-    fun createNotificationPreO(context: Service, title: String, content: String) {
+    fun createNotificationPreO(context: Service,
+                               notificationTitle: String,
+                               notificationContent: String) {
         val intent = packageManager.getLaunchIntentForPackage(packageName)
         val piLaunchMainActivity = PendingIntent.getActivity(context,
                 10001, intent, PendingIntent.FLAG_UPDATE_CURRENT)
         val mNotification: Notification = NotificationCompat.Builder(context)
-                .setContentTitle(title)
-                .setContentText(content)
+                .setContentTitle(notificationTitle)
+                .setContentText(notificationContent)
                 .setContentIntent(piLaunchMainActivity)
                 .setStyle(BigTextStyle())
                 .build()

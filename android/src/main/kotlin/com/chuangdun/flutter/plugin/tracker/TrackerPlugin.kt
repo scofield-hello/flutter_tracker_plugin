@@ -72,14 +72,28 @@ public class TrackerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Pl
                 val extraBody = call.argument<Map<String, String>>("extraBody")
                 val minTimeInterval = call.argument<Int>("minTimeInterval")
                 val minDistance = call.argument<Double>("minDistance")
+                val notificationChannelId = call.argument<String>("notificationChannelId")
+                val notificationChannelName = call.argument<String>("notificationChannelName")
+                val notificationChannelDescription = call.argument<String>("notificationChannelDescription")
                 val notificationTitle = call.argument<String>("notificationTitle")
                 val notificationContent = call.argument<String>("notificationContent")
                 if (postUrl == null || headers == null || extraBody == null || minTimeInterval == null
-                        || minDistance == null || notificationTitle == null || notificationContent == null) {
+                        || minDistance == null || notificationTitle == null || notificationContent == null
+                        || notificationChannelId == null || notificationChannelName == null
+                        || notificationChannelDescription == null) {
                     throw IllegalArgumentException("定位参数有误,请检查.")
                 }
-                TrackerManager.start(context!!, postUrl, headers, extraBody, minTimeInterval,
-                        minDistance.toFloat(), notificationTitle, notificationContent)
+                TrackerManager.start(context!!,
+                        postUrl,
+                        headers,
+                        extraBody,
+                        minTimeInterval,
+                        minDistance.toFloat(),
+                        notificationChannelId,
+                        notificationChannelName,
+                        notificationChannelDescription,
+                        notificationTitle,
+                        notificationContent)
                 result.success(true)
             }
             "stop" -> {
