@@ -21,9 +21,6 @@ class ServiceLauncher(private val context: Context, private val workerParams: Wo
         val extraBody = params["extraBody"] as String
         val minTimeInterval = params["minTimeInterval"] as Int
         val minDistance = params["minDistance"] as Float
-        val notificationChannelId = params["notificationChannelId"] as String
-        val notificationChannelName = params["notificationChannelName"] as String
-        val notificationChannelDescription = params["notificationChannelDescription"] as String
         val notificationTitle = params["notificationTitle"] as String
         val notificationContent = params["notificationContent"] as String
         val intent = Intent(context, TrackerService::class.java)
@@ -33,9 +30,6 @@ class ServiceLauncher(private val context: Context, private val workerParams: Wo
         intent.putExtra("extraBody", extraBody)
         intent.putExtra("minTimeInterval", minTimeInterval)
         intent.putExtra("minDistance", minDistance)
-        intent.putExtra("notificationChannelId", notificationChannelId)
-        intent.putExtra("notificationChannelName", notificationChannelName)
-        intent.putExtra("notificationChannelDescription", notificationChannelDescription)
         intent.putExtra("notificationTitle", notificationTitle)
         intent.putExtra("notificationContent", notificationContent)
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
