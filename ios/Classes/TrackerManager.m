@@ -109,7 +109,7 @@
     double latitude = location.coordinate.latitude;
     double longitude = location.coordinate.longitude;
     long timestamp = [[NSNumber
-                       numberWithDouble:location.timestamp.timeIntervalSince1970] longValue];
+                       numberWithDouble:location.timestamp.timeIntervalSince1970] longValue] * 1000;
     NSString *provider = @"gps|network";
     NSString *platform = @"iOS";
     NSString *brand = @"iPhone";
@@ -150,7 +150,7 @@
     NSString *version = [NSString stringWithFormat:@"%.1f",
                          [[[UIDevice currentDevice] systemVersion] floatValue]];
     NSDate *dateNow = [NSDate date];
-    long timestamp = [[NSNumber numberWithDouble:dateNow.timeIntervalSince1970] longValue];
+    long timestamp = [[NSNumber numberWithDouble:dateNow.timeIntervalSince1970] longValue] * 1000;
     [self createDataTask:@"NOT_AVAILABLE"
         timestamp:timestamp
          latitude:0.0
@@ -171,7 +171,7 @@
     NSString *version = [NSString stringWithFormat:@"%.1f",
                          [[[UIDevice currentDevice] systemVersion] floatValue]];
     NSDate *dateNow = [NSDate date];
-    long timestamp = [[NSNumber numberWithDouble:dateNow.timeIntervalSince1970] longValue];
+    long timestamp = [[NSNumber numberWithDouble:dateNow.timeIntervalSince1970] longValue] * 1000;
     [self createDataTask:@"PERMISSION_DENIED"
         timestamp:timestamp
          latitude:0.0
@@ -201,10 +201,6 @@
     manager.responseSerializer = [AFJSONResponseSerializer serializer];
     manager.requestSerializer = [AFJSONRequestSerializer serializer];
     manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", nil];
-    for (id key in self.headers) {
-        id value = [self.headers objectForKey:key];
-        [manager.requestSerializer setValue:value forHTTPHeaderField:key];
-    }
     [self.extraBody setValue:status forKey:@"status"];
     [self.extraBody setValue:[NSNumber numberWithLong:timestamp] forKey:@"timestamp"];
     [self.extraBody setValue:[NSNumber numberWithDouble:latitude] forKey:@"latitude"];
@@ -214,7 +210,7 @@
     [self.extraBody setValue:brand forKey:@"deviceBrand"];
     [self.extraBody setValue:model forKey:@"deviceModel"];
     [self.extraBody setValue:systemVersion forKey:@"systemVersion"];
-    [manager POST:self.postUrl parameters:self.extraBody progress:^(NSProgress * _Nonnull uploadProgress) {
+    [manager POST:self.postUrl parameters:self.extraBody headers:self.headers progress:^(NSProgress * _Nonnull uploadProgress) {
     } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
         NSDictionary *data = responseObject;
         if ([[data allKeys] containsObject:@"code"]) {
