@@ -13,6 +13,7 @@
     BOOL _start;
     BOOL _deferringUpdates;
     CLLocationManager *_locationManager;
+    double _lastLocationTime;
 }
 @end
 
@@ -25,6 +26,7 @@
         _locationManager = [[CLLocationManager alloc] init];
         _locationManager.delegate = self;
         _deferringUpdates = NO;
+        _lastLocationTime = 0.0;
     }
     return self;
 }
@@ -69,12 +71,12 @@
         _locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters;
         _locationManager.distanceFilter = _minDistance;
         _deferringUpdates = false;
-        if (@available(iOS 9.0, *)) {
-            _locationManager.allowsBackgroundLocationUpdates = YES;
-        }
-        if (@available(iOS 11.0, *)) {
-            _locationManager.showsBackgroundLocationIndicator = YES;
-        }
+//        if (@available(iOS 9.0, *)) {
+//            _locationManager.allowsBackgroundLocationUpdates = YES;
+//        }
+//        if (@available(iOS 11.0, *)) {
+//            _locationManager.showsBackgroundLocationIndicator = YES;
+//        }
         _locationManager.activityType = CLActivityTypeOtherNavigation;
         [_locationManager startUpdatingLocation];
         NSLog(@"位置上报服务已开启");
@@ -98,18 +100,28 @@
 - (void)locationManager:(CLLocationManager *)manager
      didUpdateLocations:(NSArray<CLLocation *> *)locations{
     CLLocation *location = [locations lastObject];
-    [self uploadLocation:location];
-    if (!_deferringUpdates) {
-        [_locationManager allowDeferredLocationUpdatesUntilTraveled:_minDistance timeout:_minTimeInterval];
-        _deferringUpdates = true;
+    NSTimeInterval current = [[NSDate alloc]init].timeIntervalSince1970;
+    NSLog(@"当前时间戳:%f", current);
+    NSTimeInterval timeSpan = current - _lastLocationTime;
+    NSLog(@"时间间隔秒数:%f", timeSpan);
+    if (timeSpan >= _minTimeInterval) {
+        _lastLocationTime = current;
+        [self uploadLocation:location];
+    }else{
+        NSLog(@"位置变化过于频繁，该位置被丢弃");
     }
+//    if (!_deferringUpdates) {
+//        [_locationManager allowDeferredLocationUpdatesUntilTraveled:_minDistance timeout:_minTimeInterval];
+//        _deferringUpdates = true;
+//    }
 }
 
 -(void)uploadLocation:(CLLocation*)location{
     double latitude = location.coordinate.latitude;
     double longitude = location.coordinate.longitude;
-    long timestamp = [[NSNumber
-                       numberWithDouble:location.timestamp.timeIntervalSince1970] longValue] * 1000;
+    long timestamp = [[NSNumber numberWithDouble:[[NSDate alloc]init].timeIntervalSince1970] longValue] * 1000 ;
+    //部分机型时间不太正常
+    //[[NSNumber numberWithDouble:location.timestamp.timeIntervalSince1970] longValue] * 1000;
     NSString *provider = @"gps|network";
     NSString *platform = @"iOS";
     NSString *brand = @"iPhone";
