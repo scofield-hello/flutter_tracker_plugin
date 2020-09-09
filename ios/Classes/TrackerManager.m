@@ -71,6 +71,7 @@
         _locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters;
         _locationManager.distanceFilter = _minDistance;
         _deferringUpdates = false;
+        _lastLocationTime = 0.0;
 //        if (@available(iOS 9.0, *)) {
 //            _locationManager.allowsBackgroundLocationUpdates = YES;
 //        }
@@ -92,6 +93,7 @@
     if (_start) {
         [_locationManager stopUpdatingLocation];
         _deferringUpdates = false;
+        _lastLocationTime = 0.0;
         NSLog(@"关闭位置上报服务.");
     }
     _start = NO;
