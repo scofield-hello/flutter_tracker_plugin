@@ -100,7 +100,7 @@
 - (void)locationManager:(CLLocationManager *)manager
      didUpdateLocations:(NSArray<CLLocation *> *)locations{
     CLLocation *location = [locations lastObject];
-    NSTimeInterval current = [[NSDate alloc]init].timeIntervalSince1970;
+    NSTimeInterval current = [NSDate date].timeIntervalSince1970;
     NSLog(@"当前时间戳:%f", current);
     NSTimeInterval timeSpan = current - _lastLocationTime;
     NSLog(@"时间间隔秒数:%f", timeSpan);
@@ -119,7 +119,7 @@
 -(void)uploadLocation:(CLLocation*)location{
     double latitude = location.coordinate.latitude;
     double longitude = location.coordinate.longitude;
-    long timestamp = [[NSNumber numberWithDouble:[[NSDate alloc]init].timeIntervalSince1970] longValue] * 1000 ;
+    long timestamp = [[NSNumber numberWithDouble:[NSDate date].timeIntervalSince1970] longValue] * 1000 ;
     //部分机型时间不太正常
     //[[NSNumber numberWithDouble:location.timestamp.timeIntervalSince1970] longValue] * 1000;
     NSString *provider = @"gps|network";
