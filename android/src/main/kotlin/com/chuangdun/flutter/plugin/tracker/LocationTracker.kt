@@ -11,6 +11,8 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.core.content.ContextCompat
+import io.reactivex.processors.PublishProcessor
+import java.util.concurrent.TimeUnit
 
 
 class LocationTracker(private val context: Context, private val callback: LocationCallback) : LocationListener {
@@ -21,7 +23,12 @@ class LocationTracker(private val context: Context, private val callback: Locati
     private var mProvider: String? = null
     private var lastLocationTime = 0L
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-
+    private val publisher = PublishProcessor.create<Location>()
+    init {
+        //2秒内如果多次上传位置，使用之后一次的位置
+        publisher.throttleLast(2,TimeUnit.SECONDS)
+                .subscribe {  it -> callback?.onLocationChanged(it)}
+    }
     companion object {
         private const val TAG = "LocationTracker"
     }
@@ -33,7 +40,7 @@ class LocationTracker(private val context: Context, private val callback: Locati
         val timeSpan = location.time - lastLocationTime
         if (timeSpan >= minTimeIntervalInMillSecond) {
             lastLocationTime = location.time
-            callback.onLocationChanged(location)
+            publisher.onNext(location)
         } else {
             Log.d(TAG, "位置变化过于频繁,该位置信息被丢弃")
         }
