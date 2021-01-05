@@ -26,7 +26,7 @@ class LocationTracker(private val context: Context, private val callback: Locati
     private val publisher = PublishProcessor.create<Location>()
     init {
         //2秒内如果多次上传位置，使用之后一次的位置
-        publisher.throttleLast(2,TimeUnit.SECONDS)
+        publisher.throttleLast(5,TimeUnit.SECONDS)
                 .subscribe {  it -> callback?.onLocationChanged(it)}
     }
     companion object {
@@ -120,7 +120,7 @@ class LocationTracker(private val context: Context, private val callback: Locati
             isSpeedRequired = false
             isBearingRequired = false
             isAltitudeRequired = false
-            accuracy = Criteria.ACCURACY_COARSE
+            accuracy = Criteria.ACCURACY_MEDIUM
             powerRequirement = Criteria.POWER_MEDIUM
         }
         return locationManager.getBestProvider(criteria, true)
