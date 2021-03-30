@@ -39,6 +39,7 @@ class TrackerService : Service(), LocationTracker.LocationCallback {
 
     private var minDistance = 0.0f
     private var minTimeInterval = 300
+    private var isDestroy = false
     private lateinit var postUrl: String
     private lateinit var headers: JSONObject
     private lateinit var extraBody: JSONObject
@@ -164,6 +165,7 @@ class TrackerService : Service(), LocationTracker.LocationCallback {
     override fun onDestroy() {
         super.onDestroy()
         threadPool.shutdown()
+        isDestroy = true
         Log.i(TAG, "位置跟踪服务组件已销毁.")
     }
 
@@ -182,7 +184,9 @@ class TrackerService : Service(), LocationTracker.LocationCallback {
                 headers = headers,
                 extraBody = extraBody
         )
-        threadPool.submit(uploadTask)
+        if (!isDestroy){
+            threadPool.submit(uploadTask)
+        }
     }
 
     override fun onNotAvailable() {
