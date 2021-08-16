@@ -14,7 +14,6 @@ import androidx.core.content.ContextCompat
 import io.reactivex.processors.PublishProcessor
 import java.util.concurrent.TimeUnit
 
-
 class LocationTracker(private val context: Context, private val callback: LocationCallback) : LocationListener {
 
     var minDistance = 0.0f
@@ -35,6 +34,10 @@ class LocationTracker(private val context: Context, private val callback: Locati
 
     override fun onLocationChanged(location: Location?) {
         if (location == null) {
+            return
+        }
+        if (outRangeOfChina(location.latitude, location.longitude)){
+            Log.d(TAG, "位置超出中国范围,可能出现漂移，该位置信息被丢弃")
             return
         }
         val timeSpan = location.time - lastLocationTime
@@ -124,6 +127,16 @@ class LocationTracker(private val context: Context, private val callback: Locati
             powerRequirement = Criteria.POWER_MEDIUM
         }
         return locationManager.getBestProvider(criteria, true)
+    }
+
+    private fun outRangeOfChina(latitude:Double, longitude:Double): Boolean{
+        if(longitude < 72.004 || longitude > 137.8347){
+            return true
+        }
+        if(latitude < 0.8293 || latitude > 55.8271){
+            return true
+        }
+        return false
     }
 
     interface LocationCallback {
