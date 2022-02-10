@@ -78,9 +78,9 @@ class LocationTracker(private val context: Context, private val callback: Locati
         val permissions = mutableListOf(
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            permissions.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        }
+//         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+//             permissions.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+//         }
         val notGrantedPermissions = permissions.filterNot {
             ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
